@@ -1,0 +1,16 @@
+{
+  "name": "amberscan",
+  "version": "1.0.0",
+  "description": "This is the amber scan project, part of Harry Atwal's Thesis",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express":"*",
+    "body-parser":"*",
+    "mongoose":"*"
+  },
+  "author": "Harry Atwal",
+  "license": "ISC"
+}
