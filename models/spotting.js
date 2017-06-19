@@ -2,6 +2,7 @@
  * Created by Harry on 5/15/2017.
  * This is the schema used to link the mongo db collection spottings to the api.
  * This is where the database interactions take place
+ *
  */
 
 var mongoose = require('mongoose');

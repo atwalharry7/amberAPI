@@ -4,6 +4,17 @@ var bodyparser = require('body-parser');
 var mongoose = require('mongoose');
 var version = {version: 1.0}
 
+var multer = require('multer');
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/submissions/')
+    },
+    filename: function (req, file, cb) {
+        cb(null, req.body["imageName"] )
+    }
+});
+var upload = multer({storage: storage});
+
 app.use(bodyparser.json());
 
 //Connect to mongoose
@@ -52,7 +63,7 @@ app.get('/api/spotting/:_id', function(req, res){
 app.post('/api/spotting', function(req, res){
     //Access the Spotting object and all of its properties and functions. This is where the body parser will be used
     var spotting = req.body; //Allows us to access everything that comes into the form.
-    Spotting.addSpotting(spotting, function (err, spotting) {    //Pass in the callback, which is an error and a spotting object
+    Spotting.addSpotting(spotting, function (err, spotting) {    //Pass in the callback, which is an error and the callback
         //If there is an error, throw the rror
         if (err){
             throw err;
@@ -86,7 +97,14 @@ app.delete('/api/spotting/:_id', function(req, res){
     });
 })
 
-// ---------------------------- IMAGE -------------------------
+// ---------------------------- IMAGE Table -------------------------
+//Route that will store the image onto disk under /public/submissions
+app.post('/api/upload', upload.single('image'), function(req, res, next){
+    //console.log('File Data according to multer: ' + JSON.stringify(req.file));
+    console.log("Incoming data packet raw");
+    console.log(submitData);
+})
+
 //Route to get all the images in the system
 app.get('/api/images', function(req, res){
     //Access the Spotting object and all of its properties and functions.
@@ -127,6 +145,15 @@ app.post('/api/image', function(req, res){
         res.json(image); //Respond with the Image.
     });
 })
+
+// ---------------------------- DEBUG -------------------------
+//Debug route that will just take a post request and the JSON content posted within it and output it to the console.
+app.post('/api/debug', function(req, res)
+{
+    var submitData = req.body;
+    //res.status(200).send("Good communication");
+    res.json({"id":"1001"});
+});
 
 app.listen(3030);
 
