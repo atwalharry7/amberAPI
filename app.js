@@ -2,12 +2,12 @@ var express = require('express');
 var app = express();
 var bodyparser = require('body-parser');
 var mongoose = require('mongoose');
-var version = {version: "0.1.10"}
-
+var version = {version: "0.1.11"}
+var storageDestination = "public/submissions/";
 var multer = require('multer');
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/submissions/')
+        cb(null, storageDestination)
     },
     filename: function (req, file, cb) {
         cb(null, req.body["imageName"] )
@@ -34,6 +34,7 @@ app.get('/version', function(req, res){
     res.json(version)
 })
 
+// ---------------------------- Spotting Table -------------------------
 //Route to get all the spottings in the system
 app.get('/api/spottings', function(req, res){
     //Access the Spotting object and all of its properties and functions.
@@ -102,8 +103,8 @@ app.delete('/api/spotting/:_id', function(req, res){
 //Route that will store the image onto disk under /public/submissions
 app.post('/api/upload', upload.single('image'), function(req, res, next){
     //console.log('File Data according to multer: ' + JSON.stringify(req.file));
-    console.log("Incoming data packet raw");
-    console.log(submitData);
+    console.log("Image Received at api/upload endpoint");
+    res.status(200).send("Success");
 })
 
 //Route to get all the images in the system
@@ -133,11 +134,14 @@ app.get('/api/image/:_id', function(req, res){
 })
 
 // Enter in a new image
-app.post('/api/image', function(req, res){
+app.post('/api/image', upload.single('image'),  function(req, res, next){
     //Access the Image object and all of its properties and functions. This is where the body parser will be used
     //TODO: Change this around so that this funciton will store the image in the public directory and return the path, that path is stored in mongo
-    var image = req.body; //Allows us to access everything that comes into the form.
-    Image.addImage(image, function (err, image) {
+    console.log("Attempting to store image")
+    console.log("The image name is " + req.body['imageName'])
+    var imageLocation = storageDestination + req.body['imageName']
+    //Store the image data into the mongo db under image 
+    Image.addImage(imageLocation, function (err, image) {
         //If there is an error, throw the error
         if (err){
             throw err;
@@ -145,6 +149,7 @@ app.post('/api/image', function(req, res){
         //if there is no error, then we want to return the json of the image object from mongo.
         res.json(image); //Respond with the Image.
     });
+    res.status(200).send("Success")
 })
 
 // ---------------------------- DEBUG -------------------------
