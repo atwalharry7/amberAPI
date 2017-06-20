@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 var bodyparser = require('body-parser');
 var mongoose = require('mongoose');
-var version = {version: 1.0}
+var version = {version: "0.1.10"}
 
 var multer = require('multer');
 var storage = multer.diskStorage({
@@ -29,6 +29,7 @@ app.get('/' , function(req, res){
 });
 
 app.get('/version', function(req, res){
+    console.log("VersionNumberCalled");
     //res.send(version)
     res.json(version)
 })
