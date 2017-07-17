@@ -8,6 +8,10 @@ var mongoose = require('mongoose');
 
 //Spotting Schema
 var imageSchema = mongoose.Schema({
+    imageID:{
+        type: String,
+        required: true
+    },
     location:{
         type: String,
         required: true

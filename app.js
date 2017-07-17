@@ -2,15 +2,18 @@ var express = require('express');
 var app = express();
 var bodyparser = require('body-parser');
 var mongoose = require('mongoose');
-var version = {version: "0.1.11"}
+var version = {version: "0.1.15"}
 var storageDestination = "public/submissions/";
 var multer = require('multer');
+
+var debugCounter = 0;
+
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, storageDestination)
     },
     filename: function (req, file, cb) {
-        cb(null, req.body["imageName"] )
+        cb(null, req.body["imageName"])
     }
 });
 var upload = multer({storage: storage});
@@ -100,12 +103,59 @@ app.delete('/api/spotting/:_id', function(req, res){
 })
 
 // ---------------------------- IMAGE Table -------------------------
-//Route that will store the image onto disk under /public/submissions
-app.post('/api/upload', upload.single('image'), function(req, res, next){
+//Route that will store the image onto disk under /public/submissions, it will also add an entry to the database with the storage location
+app.post('/api/upload', upload.single('image'), function(req, res, next) {
     //console.log('File Data according to multer: ' + JSON.stringify(req.file));
-    console.log("Image Received at api/upload endpoint");
-    res.status(200).send("Success");
-})
+    debugCounter += 1
+    console.log("Image Received at api/upload endpoint. Counter : " + debugCounter);
+
+    //Store the image data into the mongo db under image
+
+    var imageName = req.body['imageName'];
+    var imageLocation = storageDestination + req.body['imageName'];
+    imageModel = {"imageID": req.body['imageName'], "location": imageLocation};
+    console.log("The image location is " + imageLocation);
+    Image.addImage(imageModel, function (err, image) {
+        //If there is an error, throw the error
+        if (err) {
+            throw err;
+        }
+        //if there is no error, then we want to return the json of the image object from mongo.
+        //res.json(image); //Respond with the Image.
+    });
+
+
+    //res.status(301).json({"data" : "COMING STRAIGHT FORM THE UNDERGROUND"});
+    //res.status(301).send("FUCK THE POLICE COMING STRAIGHT FROM THE UNDER GROUND");
+
+    // ----------------------------------- Rank One -------------------------------------------
+    var spawn = require('child_process').spawn;
+    var pyROC = spawn('python', ['/home/harry/Algorithms/RankOne/python/enrollAnalyze.py', imageName]);
+    var dataString = ''
+
+    /*Here we are saying that every time our node application receives data from the python process output stream(on 'data'),
+    we want to convert that received data into a string and append it to the overall dataString.*/
+    pyROC.stdout.on('data', function(data){
+        dataString += data.toString();
+    });
+
+    /*Once the stream is done (on 'end') we want to simply log the received data to the console.*/
+    pyROC.stdout.on('end', function(){
+        //console.log('Output of data \n ----------------- \n' ,dataString);
+        console.log('Output of data \n');
+        console.log(dataString);
+        res.write(dataString);
+        res.end();
+
+    });
+
+    // Now we need to parse the data returned by python.
+
+
+
+
+    //res.status(279).send("Success");
+});
 
 //Route to get all the images in the system
 app.get('/api/images', function(req, res){
@@ -118,7 +168,7 @@ app.get('/api/images', function(req, res){
         //if there is no error, then we want to return the json of the spotting object from mongo.
         res.json(image);
     });
-})
+});
 
 //Route if you want to just get a specific image
 app.get('/api/image/:_id', function(req, res){
@@ -133,35 +183,45 @@ app.get('/api/image/:_id', function(req, res){
     });
 })
 
-// Enter in a new image
-app.post('/api/image', upload.single('image'),  function(req, res, next){
-    //Access the Image object and all of its properties and functions. This is where the body parser will be used
-    //TODO: Change this around so that this funciton will store the image in the public directory and return the path, that path is stored in mongo
-    console.log("Attempting to store image")
-    console.log("The image name is " + req.body['imageName'])
-    var imageLocation = storageDestination + req.body['imageName']
-    //Store the image data into the mongo db under image 
-    Image.addImage(imageLocation, function (err, image) {
-        //If there is an error, throw the error
-        if (err){
-            throw err;
-        }
-        //if there is no error, then we want to return the json of the image object from mongo.
-        res.json(image); //Respond with the Image.
-    });
-    res.status(200).send("Success")
-})
-
 // ---------------------------- DEBUG -------------------------
 //Debug route that will just take a post request and the JSON content posted within it and output it to the console.
 app.post('/api/debug', function(req, res)
 {
     var submitData = req.body;
+    console.log("Image Received at api/debug endpoint, Contents: \n");
+    console.log(req.body)
     //res.status(200).send("Good communication");
     res.json({"id":"1001"});
 });
 
+app.post('/api/debugUpload',upload.single("image"), function(req, res, next){
+    debugCounter += 1
+    console.log("Image Received at api/debugUpload endpoint. Counter : " + debugCounter);
+    //console.log('File Data according to multer: ' + JSON.stringify(req.body));
+
+    /*
+    //Store the image data into the mongo db under image
+    var imageLocation = storageDestination + req.body['imageName'];
+    imageModel = {"imageID": req.body['imageName'], "location" : imageLocation};
+    console.log("The image location is " + imageLocation);
+    Image.addImage(imageModel, function (err, image) {
+        //If there is an error, throw the error
+        if (err){
+            throw err;
+        }
+        //if there is no error, then we want to return the json of the image object from mongo.
+        //res.json(image); //Respond with the Image.
+    });
+    */
+
+    res.status(279).send("Success");
+
+});
+
+
 app.listen(3030);
 
 console.log("The application is running....");
+
+
 
