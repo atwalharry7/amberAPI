@@ -36,6 +36,7 @@ app.get('/version', function(req, res){
     //res.send(version)
     res.json(version)
 })
+app.use(express.static('./public'))
 
 // ---------------------------- Spotting Table -------------------------
 //Route to get all the spottings in the system
@@ -125,16 +126,20 @@ app.post('/api/upload', upload.single('image'), function(req, res, next) {
     });
 
 
-    //res.status(301).json({"data" : "COMING STRAIGHT FORM THE UNDERGROUND"});
-    //res.status(301).send("FUCK THE POLICE COMING STRAIGHT FROM THE UNDER GROUND");
+    //res.status(301).send("Success");
 
     // ----------------------------------- Rank One -------------------------------------------
     var spawn = require('child_process').spawn;
-    var pyROC = spawn('python', ['/home/harry/Algorithms/RankOne/python/enrollAnalyze.py', imageName]);
+    //TODO The image name is set temporarily to a static image
+    //imageName = "/home/harry/IMG_8587.png"
+    
+    // Create a python process with the python script which runs FR algorithms. pass in image name 
+    var pyROC = spawn('python', ['/home/harry/Projects/openBR/FRopenBR.py', imageName]);
+    //var pyROC = spawn('python', ['/home/harry/Algorithms/RankOne/python/enrollAnalyze.py', imageName]);
     var dataString = ''
 
     /*Here we are saying that every time our node application receives data from the python process output stream(on 'data'),
-    we want to convert that received data into a string and append it to the overall dataString.*/
+    we want to convert that received data into a string and append it to th overall dataString.*/
     pyROC.stdout.on('data', function(data){
         dataString += data.toString();
     });
@@ -142,8 +147,9 @@ app.post('/api/upload', upload.single('image'), function(req, res, next) {
     /*Once the stream is done (on 'end') we want to simply log the received data to the console.*/
     pyROC.stdout.on('end', function(){
         //console.log('Output of data \n ----------------- \n' ,dataString);
-        console.log('Output of data \n');
+        console.log('Output of data for python \n');
         console.log(dataString);
+        console.log("End printing")
         res.write(dataString);
         res.end();
 
